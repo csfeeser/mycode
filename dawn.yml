@@ -1,0 +1,33 @@
+---
+- name: Update config file with lineinfile tasks
+  hosts: all
+  become: true
+  vars:
+    config_file_path: /path/to/your/config.file
+    backup_file_path: /path/to/your/backup.config.file
+    lines_to_update:
+      - { regexp: '^line1', line: 'line1 updated value' }
+      - { regexp: '^line2', line: 'line2 updated value' }
+      - { regexp: '^line3', line: 'line3 updated value' }
+
+  tasks:
+    - name: Backup the config file
+      copy:
+        src: "{{ config_file_path }}"
+        dest: "{{ backup_file_path }}"
+        backup: yes
+
+    - name: Update lines in the config file
+      lineinfile:
+        path: "{{ config_file_path }}"
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: no
+      loop: "{{ lines_to_update }}"
+      notify: Revert config file
+
+  handlers:
+    - name: Revert config file
+      copy:
+        src: "{{ backup_file_path }}"
+        dest: "{{ config_file_path }}"
